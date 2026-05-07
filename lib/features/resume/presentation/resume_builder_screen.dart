@@ -1,14 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:uuid/uuid.dart';
+import '../providers/resume_provider.dart';
+import '../data/resume_model.dart';
 
-class ResumeBuilderScreen extends StatefulWidget {
+class ResumeBuilderScreen extends ConsumerStatefulWidget {
   final String? resumeId;
   const ResumeBuilderScreen({super.key, this.resumeId});
 
   @override
-  State<ResumeBuilderScreen> createState() => _ResumeBuilderScreenState();
+  ConsumerState<ResumeBuilderScreen> createState() => _ResumeBuilderScreenState();
 }
 
-class _ResumeBuilderScreenState extends State<ResumeBuilderScreen> {
+class _ResumeBuilderScreenState extends ConsumerState<ResumeBuilderScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
@@ -16,6 +21,29 @@ class _ResumeBuilderScreenState extends State<ResumeBuilderScreen> {
   final _educationController = TextEditingController();
   final _skillsController = TextEditingController();
   final _experienceController = TextEditingController();
+
+  Resume? _existingResume;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (widget.resumeId != null) {
+        final resumes = ref.read(resumeProvider);
+        try {
+          _existingResume = resumes.firstWhere((r) => r.id == widget.resumeId);
+          _nameController.text = _existingResume!.name;
+          _emailController.text = _existingResume!.email;
+          _phoneController.text = _existingResume!.phone;
+          _educationController.text = _existingResume!.education;
+          _skillsController.text = _existingResume!.skills;
+          _experienceController.text = _existingResume!.experience ?? '';
+        } catch (e) {
+          // Resume not found
+        }
+      }
+    });
+  }
 
   @override
   void dispose() {
@@ -30,9 +58,27 @@ class _ResumeBuilderScreenState extends State<ResumeBuilderScreen> {
 
   void _saveResume() {
     if (_formKey.currentState!.validate()) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Resume Saved (Mock)')),
+      final resume = Resume(
+        id: _existingResume?.id ?? const Uuid().v4(),
+        name: _nameController.text,
+        email: _emailController.text,
+        phone: _phoneController.text,
+        education: _educationController.text,
+        skills: _skillsController.text,
+        experience: _experienceController.text.isNotEmpty ? _experienceController.text : null,
+        updatedAt: DateTime.now(),
       );
+
+      if (_existingResume != null) {
+        ref.read(resumeProvider.notifier).updateResume(resume);
+      } else {
+        ref.read(resumeProvider.notifier).addResume(resume);
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Resume Saved')),
+      );
+      context.pop();
     }
   }
 

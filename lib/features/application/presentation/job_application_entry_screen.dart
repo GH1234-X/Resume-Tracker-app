@@ -1,15 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:uuid/uuid.dart';
+import '../providers/application_provider.dart';
+import '../data/application_model.dart';
+import '../../resume/providers/resume_provider.dart';
 
-class JobApplicationEntryScreen extends StatefulWidget {
+class JobApplicationEntryScreen extends ConsumerStatefulWidget {
   final String? applicationId;
   const JobApplicationEntryScreen({super.key, this.applicationId});
 
   @override
-  State<JobApplicationEntryScreen> createState() => _JobApplicationEntryScreenState();
+  ConsumerState<JobApplicationEntryScreen> createState() => _JobApplicationEntryScreenState();
 }
 
-class _JobApplicationEntryScreenState extends State<JobApplicationEntryScreen> {
+class _JobApplicationEntryScreenState extends ConsumerState<JobApplicationEntryScreen> {
   final _formKey = GlobalKey<FormState>();
   final _companyController = TextEditingController();
   final _roleController = TextEditingController();
@@ -17,7 +23,8 @@ class _JobApplicationEntryScreenState extends State<JobApplicationEntryScreen> {
   String _selectedStatus = 'Applied';
   String? _selectedResumeId;
 
-  // Mock statuses
+  JobApplication? _existingApplication;
+
   final List<String> _statuses = [
     'Applied',
     'Shortlisted',
@@ -26,11 +33,26 @@ class _JobApplicationEntryScreenState extends State<JobApplicationEntryScreen> {
     'Selected'
   ];
 
-  // Mock resumes
-  final List<Map<String, String>> _mockResumes = [
-    {'id': '1', 'name': 'Software Engineer Resume'},
-    {'id': '2', 'name': 'Product Manager Resume'},
-  ];
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (widget.applicationId != null) {
+        final apps = ref.read(applicationProvider);
+        try {
+          _existingApplication = apps.firstWhere((a) => a.id == widget.applicationId);
+          _companyController.text = _existingApplication!.companyName;
+          _roleController.text = _existingApplication!.jobRole;
+          _dateApplied = _existingApplication!.dateApplied;
+          _selectedStatus = _existingApplication!.status;
+          _selectedResumeId = _existingApplication!.resumeId;
+          setState(() {});
+        } catch (e) {
+          // Not found
+        }
+      }
+    });
+  }
 
   @override
   void dispose() {
@@ -55,14 +77,32 @@ class _JobApplicationEntryScreenState extends State<JobApplicationEntryScreen> {
 
   void _saveApplication() {
     if (_formKey.currentState!.validate()) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Job Application Saved (Mock)')),
+      final app = JobApplication(
+        id: _existingApplication?.id ?? const Uuid().v4(),
+        companyName: _companyController.text,
+        jobRole: _roleController.text,
+        dateApplied: _dateApplied,
+        resumeId: _selectedResumeId,
+        status: _selectedStatus,
       );
+
+      if (_existingApplication != null) {
+        ref.read(applicationProvider.notifier).updateApplication(app);
+      } else {
+        ref.read(applicationProvider.notifier).addApplication(app);
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Job Application Saved')),
+      );
+      context.pop();
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final resumes = ref.watch(resumeProvider);
+
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.applicationId == null ? 'Add Application' : 'Edit Application'),
@@ -124,10 +164,10 @@ class _JobApplicationEntryScreenState extends State<JobApplicationEntryScreen> {
                 value: _selectedResumeId,
                 items: [
                   const DropdownMenuItem(value: null, child: Text('None')),
-                  ..._mockResumes.map((resume) {
+                  ...resumes.map((resume) {
                     return DropdownMenuItem(
-                      value: resume['id'],
-                      child: Text(resume['name']!),
+                      value: resume.id,
+                      child: Text(resume.name),
                     );
                   }).toList(),
                 ],

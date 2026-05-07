@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
+import '../providers/application_provider.dart';
+import '../data/application_model.dart';
 
-class SearchFilterScreen extends StatefulWidget {
+class SearchFilterScreen extends ConsumerStatefulWidget {
   const SearchFilterScreen({super.key});
 
   @override
-  State<SearchFilterScreen> createState() => _SearchFilterScreenState();
+  ConsumerState<SearchFilterScreen> createState() => _SearchFilterScreenState();
 }
 
-class _SearchFilterScreenState extends State<SearchFilterScreen> {
+class _SearchFilterScreenState extends ConsumerState<SearchFilterScreen> {
   final _searchController = TextEditingController();
   String _selectedFilterStatus = 'All';
 
@@ -20,43 +24,24 @@ class _SearchFilterScreenState extends State<SearchFilterScreen> {
     'Selected'
   ];
 
-  // Mock Data
-  final List<Map<String, String>> _allApplications = [
-    {'company': 'Google', 'role': 'Software Engineer', 'status': 'Interview Scheduled', 'date': '2026-05-01'},
-    {'company': 'Meta', 'role': 'Frontend Developer', 'status': 'Applied', 'date': '2026-05-02'},
-    {'company': 'Amazon', 'role': 'Backend Engineer', 'status': 'Shortlisted', 'date': '2026-05-03'},
-    {'company': 'Apple', 'role': 'iOS Developer', 'status': 'Rejected', 'date': '2026-04-20'},
-  ];
-
-  List<Map<String, String>> _filteredApplications = [];
-
-  @override
-  void initState() {
-    super.initState();
-    _filteredApplications = _allApplications;
-    _searchController.addListener(_filterData);
-  }
-
   @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
   }
 
-  void _filterData() {
-    final query = _searchController.text.toLowerCase();
-    setState(() {
-      _filteredApplications = _allApplications.where((app) {
-        final matchesSearch = app['company']!.toLowerCase().contains(query) || 
-                              app['role']!.toLowerCase().contains(query);
-        final matchesStatus = _selectedFilterStatus == 'All' || app['status'] == _selectedFilterStatus;
-        return matchesSearch && matchesStatus;
-      }).toList();
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
+    final applications = ref.watch(applicationProvider);
+    final query = _searchController.text.toLowerCase();
+
+    final filteredApplications = applications.where((app) {
+      final matchesSearch = app.companyName.toLowerCase().contains(query) || 
+                            app.jobRole.toLowerCase().contains(query);
+      final matchesStatus = _selectedFilterStatus == 'All' || app.status == _selectedFilterStatus;
+      return matchesSearch && matchesStatus;
+    }).toList();
+
     return Scaffold(
       appBar: AppBar(title: const Text('Search & Filter')),
       body: Column(
@@ -71,6 +56,7 @@ class _SearchFilterScreenState extends State<SearchFilterScreen> {
                     labelText: 'Search by Company or Role',
                     prefixIcon: Icon(Icons.search),
                   ),
+                  onChanged: (value) => setState(() {}),
                 ),
                 const SizedBox(height: 12),
                 Row(
@@ -89,7 +75,6 @@ class _SearchFilterScreenState extends State<SearchFilterScreen> {
                         onChanged: (value) {
                           setState(() {
                             _selectedFilterStatus = value!;
-                            _filterData();
                           });
                         },
                       ),
@@ -100,21 +85,23 @@ class _SearchFilterScreenState extends State<SearchFilterScreen> {
             ),
           ),
           Expanded(
-            child: ListView.builder(
-              itemCount: _filteredApplications.length,
-              itemBuilder: (context, index) {
-                final app = _filteredApplications[index];
-                return ListTile(
-                  leading: const CircleAvatar(child: Icon(Icons.work)),
-                  title: Text(app['company']!),
-                  subtitle: Text('${app['role']} • ${app['date']}'),
-                  trailing: Chip(
-                    label: Text(app['status']!, style: const TextStyle(fontSize: 12)),
-                    backgroundColor: _getStatusColor(app['status']!).withOpacity(0.2),
-                  ),
-                );
-              },
-            ),
+            child: filteredApplications.isEmpty 
+              ? const Center(child: Text('No applications found'))
+              : ListView.builder(
+                  itemCount: filteredApplications.length,
+                  itemBuilder: (context, index) {
+                    final app = filteredApplications[index];
+                    return ListTile(
+                      leading: const CircleAvatar(child: Icon(Icons.work)),
+                      title: Text(app.companyName),
+                      subtitle: Text('${app.jobRole} • ${DateFormat('yyyy-MM-dd').format(app.dateApplied)}'),
+                      trailing: Chip(
+                        label: Text(app.status, style: const TextStyle(fontSize: 12)),
+                        backgroundColor: _getStatusColor(app.status).withOpacity(0.2),
+                      ),
+                    );
+                  },
+                ),
           ),
         ],
       ),

@@ -1,26 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../providers/application_provider.dart';
 
-class DashboardScreen extends StatelessWidget {
+class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    // Mock Data
-    final totalApplications = 12;
-    final statusDistribution = {
-      'Applied': 5,
-      'Shortlisted': 3,
-      'Interview Scheduled': 2,
-      'Rejected': 1,
-      'Selected': 1,
-    };
+  Widget build(BuildContext context, WidgetRef ref) {
+    final applications = ref.watch(applicationProvider);
     
-    final recentApplications = [
-      {'company': 'Google', 'role': 'Software Engineer', 'status': 'Interview Scheduled'},
-      {'company': 'Meta', 'role': 'Frontend Developer', 'status': 'Applied'},
-      {'company': 'Amazon', 'role': 'Backend Engineer', 'status': 'Shortlisted'},
-    ];
+    final totalApplications = applications.length;
+    
+    final Map<String, int> statusDistribution = {};
+    for (final app in applications) {
+      statusDistribution[app.status] = (statusDistribution[app.status] ?? 0) + 1;
+    }
+    
+    // Get top 5 recent applications (sort by date Applied)
+    final recentApplications = List.from(applications)
+      ..sort((a, b) => b.dateApplied.compareTo(a.dateApplied));
+    final topRecent = recentApplications.take(5).toList();
 
     return Scaffold(
       appBar: AppBar(title: const Text('Application Dashboard')),
@@ -93,16 +93,19 @@ class DashboardScreen extends StatelessWidget {
             // Status Distribution
             const Text('Status Distribution', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: statusDistribution.entries.map((entry) {
-                return Chip(
-                  label: Text('${entry.key}: ${entry.value}'),
-                  backgroundColor: _getStatusColor(entry.key).withOpacity(0.2),
-                );
-              }).toList(),
-            ),
+            if (statusDistribution.isEmpty)
+              const Text('No applications yet.')
+            else
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: statusDistribution.entries.map((entry) {
+                  return Chip(
+                    label: Text('${entry.key}: ${entry.value}'),
+                    backgroundColor: _getStatusColor(entry.key).withOpacity(0.2),
+                  );
+                }).toList(),
+              ),
             
             const SizedBox(height: 24),
             
@@ -119,26 +122,29 @@ class DashboardScreen extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 8),
-            ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: recentApplications.length,
-              itemBuilder: (context, index) {
-                final app = recentApplications[index];
-                return Card(
-                  margin: const EdgeInsets.only(bottom: 8),
-                  child: ListTile(
-                    title: Text(app['company']!),
-                    subtitle: Text(app['role']!),
-                    trailing: Chip(
-                      label: Text(app['status']!, style: const TextStyle(fontSize: 12)),
-                      backgroundColor: _getStatusColor(app['status']!).withOpacity(0.2),
+            if (topRecent.isEmpty)
+              const Center(child: Text('No recent applications'))
+            else
+              ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: topRecent.length,
+                itemBuilder: (context, index) {
+                  final app = topRecent[index];
+                  return Card(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    child: ListTile(
+                      title: Text(app.companyName),
+                      subtitle: Text(app.jobRole),
+                      trailing: Chip(
+                        label: Text(app.status, style: const TextStyle(fontSize: 12)),
+                        backgroundColor: _getStatusColor(app.status).withOpacity(0.2),
+                      ),
+                      onTap: () => context.push('/applications/entry?id=${app.id}'),
                     ),
-                    onTap: () => context.push('/applications/entry?id=$index'), // Mock ID
-                  ),
-                );
-              },
-            ),
+                  );
+                },
+              ),
           ],
         ),
       ),

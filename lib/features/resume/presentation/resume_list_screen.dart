@@ -1,52 +1,52 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
+import '../providers/resume_provider.dart';
 
-class ResumeListScreen extends StatelessWidget {
+class ResumeListScreen extends ConsumerWidget {
   const ResumeListScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    // Mock data for UI presentation
-    final mockResumes = [
-      {'id': '1', 'name': 'Software Engineer Resume', 'updatedAt': '2026-05-01'},
-      {'id': '2', 'name': 'Product Manager Resume', 'updatedAt': '2026-05-05'},
-    ];
+  Widget build(BuildContext context, WidgetRef ref) {
+    final resumes = ref.watch(resumeProvider);
 
     return Scaffold(
       appBar: AppBar(title: const Text('My Resumes')),
-      body: mockResumes.isEmpty
+      body: resumes.isEmpty
           ? const Center(child: Text('No resumes found. Create one!'))
           : ListView.builder(
               padding: const EdgeInsets.all(16.0),
-              itemCount: mockResumes.length,
+              itemCount: resumes.length,
               itemBuilder: (context, index) {
-                final resume = mockResumes[index];
+                final resume = resumes[index];
                 return Card(
                   margin: const EdgeInsets.only(bottom: 12),
                   child: ListTile(
                     leading: const CircleAvatar(
                       child: Icon(Icons.description),
                     ),
-                    title: Text(resume['name']!),
-                    subtitle: Text('Last updated: ${resume['updatedAt']}'),
+                    title: Text(resume.name),
+                    subtitle: Text('Last updated: ${DateFormat('yyyy-MM-dd').format(resume.updatedAt)}'),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         IconButton(
                           icon: const Icon(Icons.edit, color: Colors.blue),
-                          onPressed: () => context.push('/resumes/builder?id=${resume['id']}'),
+                          onPressed: () => context.push('/resumes/builder?id=${resume.id}'),
                         ),
                         IconButton(
                           icon: const Icon(Icons.delete, color: Colors.red),
                           onPressed: () {
+                            ref.read(resumeProvider.notifier).deleteResume(resume.id);
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Delete clicked (Mock)')),
+                              const SnackBar(content: Text('Resume deleted')),
                             );
                           },
                         ),
                       ],
                     ),
-                    onTap: () => context.push('/resumes/builder?id=${resume['id']}'),
+                    onTap: () => context.push('/resumes/builder?id=${resume.id}'),
                   ),
                 );
               },
