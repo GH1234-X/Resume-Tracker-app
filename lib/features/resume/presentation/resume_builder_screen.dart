@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:uuid/uuid.dart';
 import '../providers/resume_provider.dart';
 import '../data/resume_model.dart';
+import '../../../core/utils/status_colors.dart';
 
 class ResumeBuilderScreen extends ConsumerStatefulWidget {
   final String? resumeId;
@@ -76,10 +77,38 @@ class _ResumeBuilderScreenState extends ConsumerState<ResumeBuilderScreen> {
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Resume Saved')),
+        SnackBar(
+          content: const Text('Resume Saved Successfully'),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          backgroundColor: AppColors.primary,
+        ),
       );
       context.pop();
     }
+  }
+
+  Widget _buildSectionTitle(String title, IconData icon) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16.0, top: 32.0),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppColors.accent.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, color: AppColors.accent, size: 20),
+          ),
+          const SizedBox(width: 12),
+          Text(
+            title,
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.primary),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -88,72 +117,114 @@ class _ResumeBuilderScreenState extends ConsumerState<ResumeBuilderScreen> {
       appBar: AppBar(
         title: Text(widget.resumeId == null ? 'Create Resume' : 'Edit Resume'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.save),
-            onPressed: _saveResume,
+          Padding(
+            padding: const EdgeInsets.only(right: 8.0),
+            child: TextButton.icon(
+              icon: const Icon(Icons.check, size: 20),
+              label: const Text('Save'),
+              onPressed: _saveResume,
+            ),
           )
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
         child: Form(
           key: _formKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Personal Details', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 8),
-              TextFormField(
-                controller: _nameController,
-                decoration: const InputDecoration(labelText: 'Full Name'),
-                validator: (value) => value == null || value.isEmpty ? 'Please enter name' : null,
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _emailController,
-                decoration: const InputDecoration(labelText: 'Email Address'),
-                validator: (value) => value == null || !value.contains('@') ? 'Enter a valid email' : null,
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _phoneController,
-                decoration: const InputDecoration(labelText: 'Phone Number'),
-                validator: (value) => value == null || value.isEmpty ? 'Please enter phone' : null,
-              ),
-              const SizedBox(height: 24),
-              const Text('Education', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 8),
-              TextFormField(
-                controller: _educationController,
-                decoration: const InputDecoration(labelText: 'Degree & University'),
-                maxLines: 2,
-                validator: (value) => value == null || value.isEmpty ? 'Please enter education' : null,
-              ),
-              const SizedBox(height: 24),
-              const Text('Skills', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 8),
-              TextFormField(
-                controller: _skillsController,
-                decoration: const InputDecoration(labelText: 'Skills (comma separated)'),
-                validator: (value) => value == null || value.isEmpty ? 'Please enter skills' : null,
-              ),
-              const SizedBox(height: 24),
-              const Text('Experience (Optional)', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 8),
-              TextFormField(
-                controller: _experienceController,
-                decoration: const InputDecoration(labelText: 'Work Experience'),
-                maxLines: 3,
-              ),
-              const SizedBox(height: 32),
-              SizedBox(
+              Container(
                 width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _saveResume,
-                  child: const Text('Save Resume'),
+                color: AppColors.surface,
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Basic Information', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.secondaryText, letterSpacing: 1.0)),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _nameController,
+                      decoration: const InputDecoration(labelText: 'Full Name', hintText: 'John Doe'),
+                      validator: (value) => value == null || value.isEmpty ? 'Please enter name' : null,
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextFormField(
+                            controller: _emailController,
+                            decoration: const InputDecoration(labelText: 'Email Address', hintText: 'john@example.com'),
+                            validator: (value) => value == null || !value.contains('@') ? 'Enter a valid email' : null,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: TextFormField(
+                            controller: _phoneController,
+                            decoration: const InputDecoration(labelText: 'Phone Number', hintText: '+1 234 567 890'),
+                            validator: (value) => value == null || value.isEmpty ? 'Please enter phone' : null,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildSectionTitle('Education', Icons.school_outlined),
+                    TextFormField(
+                      controller: _educationController,
+                      decoration: const InputDecoration(
+                        labelText: 'Degree & University',
+                        hintText: 'e.g., B.S. in Computer Science, Stanford University',
+                        alignLabelWithHint: true,
+                      ),
+                      maxLines: 3,
+                      validator: (value) => value == null || value.isEmpty ? 'Please enter education details' : null,
+                    ),
+                    
+                    _buildSectionTitle('Skills', Icons.psychology_outlined),
+                    TextFormField(
+                      controller: _skillsController,
+                      decoration: const InputDecoration(
+                        labelText: 'Core Skills',
+                        hintText: 'e.g., Flutter, Dart, Riverpod, Firebase',
+                        helperText: 'Separate skills with commas',
+                      ),
+                      validator: (value) => value == null || value.isEmpty ? 'Please enter skills' : null,
+                    ),
+                    
+                    _buildSectionTitle('Experience (Optional)', Icons.work_history_outlined),
+                    TextFormField(
+                      controller: _experienceController,
+                      decoration: const InputDecoration(
+                        labelText: 'Work Experience',
+                        hintText: 'Describe your past roles, companies, and achievements...',
+                        alignLabelWithHint: true,
+                      ),
+                      maxLines: 5,
+                    ),
+                    const SizedBox(height: 48),
+                  ],
                 ),
               ),
             ],
+          ),
+        ),
+      ),
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: ElevatedButton(
+            onPressed: _saveResume,
+            style: ElevatedButton.styleFrom(
+              minimumSize: const Size(double.infinity, 56),
+            ),
+            child: const Text('Save Resume Profile'),
           ),
         ),
       ),

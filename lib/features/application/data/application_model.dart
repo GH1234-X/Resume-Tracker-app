@@ -17,10 +17,16 @@ class JobApplication extends HiveObject {
   final DateTime dateApplied;
 
   @HiveField(4)
-  final String? resumeId; // Maps to Resume
+  final String? resumeId;
 
   @HiveField(5)
   final String status;
+
+  @HiveField(6)
+  final String? userId;
+
+  @HiveField(7)
+  final bool isSynced;
 
   JobApplication({
     required this.id,
@@ -29,6 +35,8 @@ class JobApplication extends HiveObject {
     required this.dateApplied,
     this.resumeId,
     required this.status,
+    this.userId,
+    this.isSynced = false,
   });
 
   JobApplication copyWith({
@@ -38,6 +46,8 @@ class JobApplication extends HiveObject {
     DateTime? dateApplied,
     String? resumeId,
     String? status,
+    String? userId,
+    bool? isSynced,
   }) {
     return JobApplication(
       id: id ?? this.id,
@@ -46,6 +56,8 @@ class JobApplication extends HiveObject {
       dateApplied: dateApplied ?? this.dateApplied,
       resumeId: resumeId ?? this.resumeId,
       status: status ?? this.status,
+      userId: userId ?? this.userId,
+      isSynced: isSynced ?? this.isSynced,
     );
   }
 }

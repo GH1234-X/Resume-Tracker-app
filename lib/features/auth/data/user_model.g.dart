@@ -1,39 +1,34 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'resume_model.dart';
+part of 'user_model.dart';
 
 // **************************************************************************
 // TypeAdapterGenerator
 // **************************************************************************
 
-class ResumeAdapter extends TypeAdapter<Resume> {
+class UserModelAdapter extends TypeAdapter<UserModel> {
   @override
-  final int typeId = 0;
+  final int typeId = 2;
 
   @override
-  Resume read(BinaryReader reader) {
+  UserModel read(BinaryReader reader) {
     final numOfFields = reader.readByte();
     final fields = <int, dynamic>{
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
-    return Resume(
+    return UserModel(
       id: fields[0] as String,
       name: fields[1] as String,
       email: fields[2] as String,
-      phone: fields[3] as String,
-      education: fields[4] as String,
-      skills: fields[5] as String,
-      experience: fields[6] as String?,
-      updatedAt: fields[7] as DateTime,
-      userId: fields[8] as String?,
-      isSynced: fields[9] as bool,
+      passwordHash: fields[3] as String,
+      createdAt: fields[4] as DateTime,
     );
   }
 
   @override
-  void write(BinaryWriter writer, Resume obj) {
+  void write(BinaryWriter writer, UserModel obj) {
     writer
-      ..writeByte(10)
+      ..writeByte(5)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -41,19 +36,9 @@ class ResumeAdapter extends TypeAdapter<Resume> {
       ..writeByte(2)
       ..write(obj.email)
       ..writeByte(3)
-      ..write(obj.phone)
+      ..write(obj.passwordHash)
       ..writeByte(4)
-      ..write(obj.education)
-      ..writeByte(5)
-      ..write(obj.skills)
-      ..writeByte(6)
-      ..write(obj.experience)
-      ..writeByte(7)
-      ..write(obj.updatedAt)
-      ..writeByte(8)
-      ..write(obj.userId)
-      ..writeByte(9)
-      ..write(obj.isSynced);
+      ..write(obj.createdAt);
   }
 
   @override
@@ -62,7 +47,7 @@ class ResumeAdapter extends TypeAdapter<Resume> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is ResumeAdapter &&
+      other is UserModelAdapter &&
           runtimeType == other.runtimeType &&
           typeId == other.typeId;
 }

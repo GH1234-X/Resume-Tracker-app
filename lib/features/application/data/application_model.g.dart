@@ -23,13 +23,15 @@ class JobApplicationAdapter extends TypeAdapter<JobApplication> {
       dateApplied: fields[3] as DateTime,
       resumeId: fields[4] as String?,
       status: fields[5] as String,
+      userId: fields[6] as String?,
+      isSynced: fields[7] as bool,
     );
   }
 
   @override
   void write(BinaryWriter writer, JobApplication obj) {
     writer
-      ..writeByte(6)
+      ..writeByte(8)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -41,7 +43,11 @@ class JobApplicationAdapter extends TypeAdapter<JobApplication> {
       ..writeByte(4)
       ..write(obj.resumeId)
       ..writeByte(5)
-      ..write(obj.status);
+      ..write(obj.status)
+      ..writeByte(6)
+      ..write(obj.userId)
+      ..writeByte(7)
+      ..write(obj.isSynced);
   }
 
   @override

@@ -28,6 +28,12 @@ class Resume extends HiveObject {
   @HiveField(7)
   final DateTime updatedAt;
 
+  @HiveField(8)
+  final String? userId;
+
+  @HiveField(9)
+  final bool isSynced;
+
   Resume({
     required this.id,
     required this.name,
@@ -37,6 +43,8 @@ class Resume extends HiveObject {
     required this.skills,
     this.experience,
     required this.updatedAt,
+    this.userId,
+    this.isSynced = false,
   });
 
   Resume copyWith({
@@ -48,6 +56,8 @@ class Resume extends HiveObject {
     String? skills,
     String? experience,
     DateTime? updatedAt,
+    String? userId,
+    bool? isSynced,
   }) {
     return Resume(
       id: id ?? this.id,
@@ -58,6 +68,8 @@ class Resume extends HiveObject {
       skills: skills ?? this.skills,
       experience: experience ?? this.experience,
       updatedAt: updatedAt ?? this.updatedAt,
+      userId: userId ?? this.userId,
+      isSynced: isSynced ?? this.isSynced,
     );
   }
 }
