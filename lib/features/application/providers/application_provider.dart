@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import '../data/application_model.dart';
 
 final applicationProvider = StateNotifierProvider<ApplicationNotifier, List<JobApplication>>((ref) {
@@ -6,26 +7,28 @@ final applicationProvider = StateNotifierProvider<ApplicationNotifier, List<JobA
 });
 
 class ApplicationNotifier extends StateNotifier<List<JobApplication>> {
-  ApplicationNotifier() : super([]) {
+  final Box<JobApplication> _box;
+
+  ApplicationNotifier() : _box = Hive.box<JobApplication>('applications'), super([]) {
     _loadApplications();
   }
 
   void _loadApplications() {
-    state = [];
+    state = _box.values.toList();
   }
 
   void addApplication(JobApplication application) {
-    state = [...state, application];
+    _box.put(application.id, application);
+    state = _box.values.toList();
   }
 
   void updateApplication(JobApplication application) {
-    state = [
-      for (final a in state)
-        if (a.id == application.id) application else a
-    ];
+    _box.put(application.id, application);
+    state = _box.values.toList();
   }
 
   void deleteApplication(String id) {
-    state = state.where((a) => a.id != id).toList();
+    _box.delete(id);
+    state = _box.values.toList();
   }
 }

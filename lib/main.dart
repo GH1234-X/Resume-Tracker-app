@@ -3,12 +3,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'core/router.dart';
 import 'core/theme.dart';
+import 'features/resume/data/resume_model.dart';
+import 'features/application/data/application_model.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Hive.initFlutter();
   
-  // We will open boxes here later
+  await Hive.initFlutter();
+  Hive.registerAdapter(ResumeAdapter());
+  Hive.registerAdapter(JobApplicationAdapter());
+  
+  await Hive.openBox<Resume>('resumes');
+  await Hive.openBox<JobApplication>('applications');
 
   runApp(
     const ProviderScope(

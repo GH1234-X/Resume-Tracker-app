@@ -1,6 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:hive/hive.dart';
-import 'package:uuid/uuid.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import '../data/resume_model.dart';
 
 final resumeProvider = StateNotifierProvider<ResumeNotifier, List<Resume>>((ref) {
@@ -8,28 +7,28 @@ final resumeProvider = StateNotifierProvider<ResumeNotifier, List<Resume>>((ref)
 });
 
 class ResumeNotifier extends StateNotifier<List<Resume>> {
-  ResumeNotifier() : super([]) {
+  final Box<Resume> _box;
+
+  ResumeNotifier() : _box = Hive.box<Resume>('resumes'), super([]) {
     _loadResumes();
   }
 
   void _loadResumes() {
-    // Phase 4 will use Hive
-    // For now we will keep an empty list, but we can pre-populate if needed.
-    state = [];
+    state = _box.values.toList();
   }
 
   void addResume(Resume resume) {
-    state = [...state, resume];
+    _box.put(resume.id, resume);
+    state = _box.values.toList();
   }
 
   void updateResume(Resume resume) {
-    state = [
-      for (final r in state)
-        if (r.id == resume.id) resume else r
-    ];
+    _box.put(resume.id, resume);
+    state = _box.values.toList();
   }
 
   void deleteResume(String id) {
-    state = state.where((r) => r.id != id).toList();
+    _box.delete(id);
+    state = _box.values.toList();
   }
 }
